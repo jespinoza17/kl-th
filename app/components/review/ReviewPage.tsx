@@ -16,6 +16,7 @@ import { format, formatDuration, intervalToDuration } from "date-fns";
 import { ArrowLeft, Info } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { toast } from "sonner";
 import { MiniPageLayout } from "../shared/MiniPageLayout";
@@ -206,7 +207,9 @@ export function ReviewPage() {
         <ErrorBoundary
           fallback={<ErrorFallback message="Failed to load reservation" />}
         >
-          <Content />
+          <Suspense fallback={null}>
+            <Content />
+          </Suspense>
         </ErrorBoundary>
       </MiniPageLayout>
     </div>
