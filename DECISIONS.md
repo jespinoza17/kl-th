@@ -107,3 +107,11 @@ Removed both `console.*` calls — the `console.error("Not implemented")` on the
 - Hoist the discount tooltip / discount-row label strings into `pricing.ts` (already a follow-up from Part 2 — Part 3 added a second call site but didn't yet justify the extraction).
 - Expand sessionStorage persistence to the rest of the search filters if the product wants full back-nav restoration, not just dates.
 - Wire a real logger so the server-side error path has observability without a stray `console.error`.
+
+### Additional quick notes
+- I would have added tests and spent more time on them if I hadn't run into Vercel deployment issues in the previous PR.
+- I'm using Codex for this commit because I'm dangerously close to my Claude token limit.
+- From a UX perspective, the color scheme is still mostly black and white. With more time, I'd add more color or at least revisit the `Book now` button color.
+- The passenger slider could also use another pass. I didn't interact with it much, but it doesn't become interesting until selecting 4+ seats.
+- I checked that the styling is mobile responsive.
+- I'd normally squash commits, but I wanted the log of changes to stay visible. Conductor is usually a good way to work in a git worktree and create PRs for each session with an AI tool.

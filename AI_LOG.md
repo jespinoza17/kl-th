@@ -248,6 +248,44 @@ Inspected `calendar.tsx` (wraps `react-day-picker`'s `DayPicker`) and the `TimeR
 
 ---
 
+### Codex handoff notes — 2026-05-22
+
+> **Format note:** This entry captures the short Codex session after Claude was near the token limit. It records the requested documentation-only updates and the fact that Codex was used for this commit.
+
+---
+
+#### Raw transcript
+
+**User:**
+> lets add some more quick notes to decisions file
+> - I would have added some tests and spent more time on  that had I not run into vercel deployment issues in the last pr
+> - i am now using codex for this commit since I am dangerously close to my token limit for claude haha
+> - from UX perspective color schem is mostly black/white, id add some color if I had more time or at least change the book no button color
+> - passenger slider could also be updated, i didn't interact with it much but it doesn't get too interesting until you select 4+ seat
+> - I checked and the styling is mobile responsive!
+> - id normally squash commits too but I wanted to have the log of all the changes visible, and using conductor is usually a good way to work in gitworktree and create PRs for each session with an ai tool
+
+**Codex:**
+- Found `DECISIONS.md` and confirmed the worktree was otherwise clean.
+- Read the existing decisions file to match its structure.
+- Added an `Additional quick notes` subsection under Part 3 with the user's notes, lightly cleaned up for spelling and readability while preserving the substance.
+- Checked `git diff -- DECISIONS.md` and confirmed only `DECISIONS.md` changed.
+
+---
+
+**User:**
+> awesome push this conversation to ai log as well
+
+**Codex:**
+- Appending this Codex handoff conversation to `AI_LOG.md` in the same transcript-oriented style as the Part 2 and Part 3 entries.
+
+#### Notes / follow-ups
+
+- This was a documentation-only handoff commit: no application code changed in this Codex session.
+- The decisions notes intentionally call out missing tests, deployment-time tradeoffs, mobile responsiveness, visual polish opportunities, and why commits may remain unsquashed for reviewer visibility.
+
+---
+
 ## Template for future entries
 
 ### <task / feature name> — <date / elapsed time>
