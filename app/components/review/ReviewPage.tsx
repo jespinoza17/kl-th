@@ -13,9 +13,12 @@ import {
 import { formatCents, formatCentsPrecise } from "@/lib/formatters";
 import { API } from "@/server/api";
 import { format, formatDuration, intervalToDuration } from "date-fns";
-import { Info } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { ArrowLeft, Info } from "lucide-react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
+import { toast } from "sonner";
 import { MiniPageLayout } from "../shared/MiniPageLayout";
 
 function Timeline({ startDate, endDate }: { startDate: Date; endDate: Date }) {
@@ -46,6 +49,7 @@ function Timeline({ startDate, endDate }: { startDate: Date; endDate: Date }) {
 }
 
 function Content() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const start = searchParams.get("start") ?? "";
@@ -66,10 +70,6 @@ function Content() {
     endTime: endDate.toISOString(),
   });
 
-  const handleConfirm = () => {
-    console.error("Not implemented");
-  };
-
   const formattedDuration = formatDuration(
     intervalToDuration({
       start: startDate,
@@ -81,6 +81,11 @@ function Content() {
   const hasDiscount = quote.discount !== null;
   const isHoliday = quote.discount?.kind === "holiday";
   const isLongRental = quote.discount?.kind === "long_rental";
+  const discountTooltip = isHoliday
+    ? "A 17% discount will be applied to the total price because your reservation includes a holiday."
+    : isLongRental
+      ? "A $10/hr discount has been applied to your hourly rate because your reservation is longer than 3 days."
+      : null;
 
   return (
     <div className="flex flex-col gap-8">
@@ -104,7 +109,7 @@ function Content() {
                       {formatCentsPrecise(quote.effectiveHourlyRateCents)}
                     </span>
                     <span className="text-xs">/hr</span>
-                    {isHoliday && (
+                    {discountTooltip && (
                       <TooltipProvider delayDuration={100}>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -117,8 +122,7 @@ function Content() {
                             </button>
                           </TooltipTrigger>
                           <TooltipContent side="top" className="max-w-xs text-left">
-                            A 17% discount will be applied to the total price
-                            because your reservation includes a holiday.
+                            {discountTooltip}
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -168,7 +172,16 @@ function Content() {
           <Timeline startDate={startDate} endDate={endDate} />
         </div>
 
-        <Button size="lg" className="w-full cursor-not-allowed" onClick={handleConfirm}>
+        <Button
+          size="lg"
+          className="w-full"
+          onClick={() => {
+            toast.success(
+              `Your reservation for the ${vehicle.make} ${vehicle.model} is confirmed!`,
+            );
+            router.push("/");
+          }}
+        >
           Confirm reservation
         </Button>
       </div>
@@ -178,15 +191,27 @@ function Content() {
 
 export function ReviewPage() {
   return (
-    <MiniPageLayout
-      title="Almost there"
-      subtitle="Your adventure is about to begin! Please confirm your reservation below."
-    >
-      <ErrorBoundary
-        fallback={<ErrorFallback message="Failed to load reservation" />}
+    <div>
+      <div className="container max-w-2xl mx-auto pt-6 px-8">
+        <Button asChild variant="ghost" size="sm" className="-ml-3 text-muted-foreground hover:text-foreground">
+          <Link href="/">
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Back to search
+          </Link>
+        </Button>
+      </div>
+      <MiniPageLayout
+        title="Almost there"
+        subtitle="Your adventure is about to begin! Please confirm your reservation below."
       >
-        <Content />
-      </ErrorBoundary>
-    </MiniPageLayout>
+        <ErrorBoundary
+          fallback={<ErrorFallback message="Failed to load reservation" />}
+        >
+          <Suspense fallback={null}>
+            <Content />
+          </Suspense>
+        </ErrorBoundary>
+      </MiniPageLayout>
+    </div>
   );
 }

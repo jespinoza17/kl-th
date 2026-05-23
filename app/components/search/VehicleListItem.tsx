@@ -33,7 +33,12 @@ export function VehicleListItem({
   const imgData = useBase64Image(vehicle.thumbnail_url);
 
   const hasDiscount = pricing.discount !== null;
-  const isHoliday = pricing.discount?.kind === "holiday";
+  const discountTooltip =
+    pricing.discount?.kind === "holiday"
+      ? "A 17% discount will be applied to the total price because your reservation includes a holiday."
+      : pricing.discount?.kind === "long_rental"
+        ? "A $10/hr discount has been applied to your hourly rate because your reservation is longer than 3 days."
+        : null;
 
   return (
     <Card
@@ -78,7 +83,7 @@ export function VehicleListItem({
                 /hr
               </span>
             </p>
-            {isHoliday && (
+            {discountTooltip && (
               <TooltipProvider delayDuration={100}>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -91,8 +96,7 @@ export function VehicleListItem({
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="max-w-xs text-left">
-                    A 17% discount will be applied to the total price because
-                    your reservation includes a holiday.
+                    {discountTooltip}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

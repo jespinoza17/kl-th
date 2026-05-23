@@ -11,34 +11,84 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/shared/ui/sheet"
 import { roundToNearest30Minutes } from "@/lib/times.ts";
 import { API } from "@/server/api";
 import { addDays, addHours, format } from "date-fns";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useForm } from "react-hook-form";
 
+const DATE_RANGE_STORAGE_KEY = "kw-search-date-range";
+
+interface PersistedDateRange {
+  startDate: string;
+  startTime: string;
+  endDate: string;
+  endTime: string;
+}
+
+function readPersistedDateRange(): PersistedDateRange | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(DATE_RANGE_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PersistedDateRange;
+    // Drop if startDate is in the past (a day before today) — stale state
+    const startDay = new Date(parsed.startDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (startDay < today) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
 export function SearchPage() {
-  const [initialStartDateAndTime] = useState(() =>
-    roundToNearest30Minutes(addHours(new Date(), 1)),
-  );
-
-  const [initialEndDateAndTime] = useState(() =>
-    addDays(initialStartDateAndTime, 1),
-  );
-
   const filterOptions = API.getFilterOptions();
+
+  const [defaults] = useState(() => {
+    const persisted = readPersistedDateRange();
+    const fallbackStart = roundToNearest30Minutes(addHours(new Date(), 1));
+    const fallbackEnd = addDays(fallbackStart, 1);
+    return {
+      startDate: persisted ? new Date(persisted.startDate) : fallbackStart,
+      startTime: persisted?.startTime ?? format(fallbackStart, "HH:mm"),
+      endDate: persisted ? new Date(persisted.endDate) : fallbackEnd,
+      endTime: persisted?.endTime ?? format(fallbackEnd, "HH:mm"),
+    };
+  });
 
   // Initialize form with default values
   const form = useForm<FormValues>({
     defaultValues: {
-      startDate: initialStartDateAndTime,
-      startTime: format(initialStartDateAndTime, "HH:mm"),
-      endDate: initialEndDateAndTime,
-      endTime: format(initialEndDateAndTime, "HH:mm"),
+      startDate: defaults.startDate,
+      startTime: defaults.startTime,
+      endDate: defaults.endDate,
+      endTime: defaults.endTime,
       minPassengers: 1,
       classification: filterOptions.classifications,
       make: filterOptions.makes,
       price: [10, 250],
     },
   });
+
+  useEffect(() => {
+    const subscription = form.watch((values) => {
+      if (!values.startDate || !values.endDate) return;
+      try {
+        window.sessionStorage.setItem(
+          DATE_RANGE_STORAGE_KEY,
+          JSON.stringify({
+            startDate: values.startDate.toISOString(),
+            startTime: values.startTime,
+            endDate: values.endDate.toISOString(),
+            endTime: values.endTime,
+          }),
+        );
+      } catch {
+        // Ignore storage write failures (quota, private mode, etc.)
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   const filters = (
     <ErrorBoundary

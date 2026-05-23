@@ -1,4 +1,4 @@
-import { FormValues } from "@/components/search/form.tsx";
+import { combineDateTime, FormValues } from "@/components/search/form.tsx";
 import { Button } from "@/components/shared/ui/button";
 import { Calendar } from "@/components/shared/ui/calendar";
 import {
@@ -20,7 +20,14 @@ import {
   SelectValue,
 } from "@/components/shared/ui/select";
 import { cn } from "@/lib/classnames.ts";
-import { addMinutes, format, isBefore, isSameDay, startOfDay } from "date-fns";
+import {
+  addHours,
+  addMinutes,
+  format,
+  isBefore,
+  isSameDay,
+  startOfDay,
+} from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
@@ -84,9 +91,19 @@ export function TimeRangeFilters() {
                   <Calendar
                     mode="single"
                     selected={field.value}
+                    defaultMonth={field.value}
                     onSelect={(value) => {
-                      if (value) {
-                        field.onChange(value);
+                      if (!value) return;
+                      field.onChange(value);
+                      // If the new pick-up datetime is at/after the current
+                      // drop-off datetime, push drop-off to pick-up + 24h.
+                      const { startTime, endDate, endTime } = form.getValues();
+                      const newStart = combineDateTime(value, startTime);
+                      const currentEnd = combineDateTime(endDate, endTime);
+                      if (newStart >= currentEnd) {
+                        const newEnd = addHours(newStart, 24);
+                        form.setValue("endDate", newEnd);
+                        form.setValue("endTime", format(newEnd, "HH:mm"));
                       }
                     }}
                     disabled={(date) =>
@@ -157,6 +174,7 @@ export function TimeRangeFilters() {
                   <Calendar
                     mode="single"
                     selected={field.value}
+                    defaultMonth={field.value}
                     onSelect={(value) => {
                       if (value) {
                         field.onChange(value);
