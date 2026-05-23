@@ -4,9 +4,16 @@ import { VehicleDetails } from "@/components/review/VehicleDetails";
 import { ErrorFallback } from "@/components/shared/ErrorFallback";
 import { Button } from "@/components/shared/ui/button";
 import { Separator } from "@/components/shared/ui/separator";
-import { formatCents } from "@/lib/formatters";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/shared/ui/tooltip";
+import { formatCents, formatCentsPrecise } from "@/lib/formatters";
 import { API } from "@/server/api";
 import { format, formatDuration, intervalToDuration } from "date-fns";
+import { Info } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { ErrorBoundary } from "react-error-boundary";
 import { MiniPageLayout } from "../shared/MiniPageLayout";
@@ -71,6 +78,10 @@ function Content() {
     { delimiter: ", " },
   );
 
+  const hasDiscount = quote.discount !== null;
+  const isHoliday = quote.discount?.kind === "holiday";
+  const isLongRental = quote.discount?.kind === "long_rental";
+
   return (
     <div className="flex flex-col gap-8">
       <VehicleDetails vehicle={vehicle} />
@@ -83,21 +94,73 @@ function Content() {
           <dl className="space-y-4">
             <div>
               <dt className="text-sm text-gray-600">Hourly Rate</dt>
-              <dd>
-                <span className="text-lg">
-                  {formatCents(vehicle.hourly_rate_cents)}
-                </span>
-                <span className="text-xs">/hr</span>
+              <dd className="flex items-center gap-2">
+                {hasDiscount ? (
+                  <>
+                    <span className="text-sm text-gray-500 line-through">
+                      {formatCents(quote.originalHourlyRateCents)}
+                    </span>
+                    <span className="text-lg text-green-700 font-medium">
+                      {formatCentsPrecise(quote.effectiveHourlyRateCents)}
+                    </span>
+                    <span className="text-xs">/hr</span>
+                    {isHoliday && (
+                      <TooltipProvider delayDuration={100}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              aria-label="Discount details"
+                              className="text-green-700 hover:text-green-800"
+                            >
+                              <Info className="w-4 h-4" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs text-left">
+                            A 17% discount will be applied to the total price
+                            because your reservation includes a holiday.
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <span className="text-lg">
+                      {formatCents(vehicle.hourly_rate_cents)}
+                    </span>
+                    <span className="text-xs">/hr</span>
+                  </>
+                )}
               </dd>
             </div>
             <div>
               <dt className="text-sm text-gray-600">Duration</dt>
               <dd>{formattedDuration}</dd>
             </div>
+            {hasDiscount && quote.discount && (
+              <div>
+                <dt className="text-sm text-gray-600">Discount</dt>
+                <dd className="text-green-700">
+                  {isHoliday && "Holiday discount (17% off total)"}
+                  {isLongRental && "Multi-day discount ($10/hr off)"}
+                  <span className="ml-2">
+                    −{formatCentsPrecise(quote.discount.savingsCents)}
+                  </span>
+                </dd>
+              </div>
+            )}
             <div>
               <dt className="text-sm text-gray-600">Total Cost</dt>
-              <dd className="text-2xl font-medium tracking-tight">
-                {formatCents(quote.totalPriceCents)}
+              <dd className="flex items-baseline gap-2">
+                {hasDiscount && (
+                  <span className="text-base text-gray-500 line-through">
+                    {formatCents(quote.originalTotalCents)}
+                  </span>
+                )}
+                <span className="text-2xl font-medium tracking-tight">
+                  {formatCentsPrecise(quote.totalPriceCents)}
+                </span>
               </dd>
             </div>
           </dl>

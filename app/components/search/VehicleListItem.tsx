@@ -1,16 +1,26 @@
-import { formatCents } from "@/lib/formatters";
+import { formatCents, formatCentsPrecise } from "@/lib/formatters";
+import { PricingResult } from "@/lib/pricing";
 import { Vehicle } from "@/server/data";
 import { useBase64Image } from "@/util/useBase64Image";
 import Link from "next/link";
+import { Info } from "lucide-react";
 import { Button } from "@/components/shared/ui/button";
 import { Card, CardTitle } from "@/components/shared/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/shared/ui/tooltip";
 
 export function VehicleListItem({
   vehicle,
+  pricing,
   startDateTime,
   endDateTime,
 }: {
   vehicle: Vehicle;
+  pricing: PricingResult;
   startDateTime: Date;
   endDateTime: Date;
 }) {
@@ -21,6 +31,9 @@ export function VehicleListItem({
   });
 
   const imgData = useBase64Image(vehicle.thumbnail_url);
+
+  const hasDiscount = pricing.discount !== null;
+  const isHoliday = pricing.discount?.kind === "holiday";
 
   return (
     <Card
@@ -54,14 +67,47 @@ export function VehicleListItem({
         </dl>
       </div>
       <div className="md:ml-auto text-center md:text-right flex flex-col justify-center mt-4 md:mt-0">
-        <p className="text-xl font-bold">
-          {formatCents(vehicle.hourly_rate_cents)}
-          <span className="text-sm text-gray-700 font-normal ml-0.5">/hr</span>
-        </p>
+        {hasDiscount ? (
+          <div className="flex items-center justify-center md:justify-end gap-2">
+            <span className="text-sm text-gray-500 line-through">
+              {formatCents(pricing.originalHourlyRateCents)}
+            </span>
+            <p className="text-xl font-bold text-green-700">
+              {formatCentsPrecise(pricing.effectiveHourlyRateCents)}
+              <span className="text-sm text-gray-700 font-normal ml-0.5">
+                /hr
+              </span>
+            </p>
+            {isHoliday && (
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label="Discount details"
+                      className="text-green-700 hover:text-green-800"
+                    >
+                      <Info className="w-4 h-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs text-left">
+                    A 17% discount will be applied to the total price because
+                    your reservation includes a holiday.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
+        ) : (
+          <p className="text-xl font-bold">
+            {formatCents(vehicle.hourly_rate_cents)}
+            <span className="text-sm text-gray-700 font-normal ml-0.5">
+              /hr
+            </span>
+          </p>
+        )}
         <Button asChild className="mt-2 w-full sm:w-auto">
-          <Link href={`/review?${bookNowParams.toString()}`}>
-            Book now
-          </Link>
+          <Link href={`/review?${bookNowParams.toString()}`}>Book now</Link>
         </Button>
       </div>
     </Card>

@@ -47,10 +47,11 @@ export function VehicleList() {
   return (
     <div>
       <ul className="space-y-4">
-        {searchResponse.vehicles.map((vehicle) => (
+        {searchResponse.vehicles.map(({ vehicle, pricing }) => (
           <VehicleListItem
             key={vehicle.id}
             vehicle={vehicle}
+            pricing={pricing}
             startDateTime={startDateTime}
             endDateTime={endDateTime}
           />
