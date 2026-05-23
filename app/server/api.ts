@@ -94,8 +94,7 @@ function searchVehicles(input: {
     return {
       vehicles: vehiclesWithPricing,
     };
-  } catch (error) {
-    console.error(error);
+  } catch {
     return {
       vehicles: [],
     }
