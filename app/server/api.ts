@@ -76,7 +76,7 @@ function searchVehicles(input: {
   } = input;
 
   const parsedPriceMin = priceMin;
-  const parsedPriceMax = priceMax === 100 ? Number.MAX_SAFE_INTEGER : priceMax;
+  const parsedPriceMax = priceMax;
 
   try {
     const { start, end } = parseAndValidateTimeRange(startTime, endTime);
